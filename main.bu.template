@@ -1,0 +1,85 @@
+variant: fcos
+version: 1.6.0
+passwd:
+  users:
+    - name: "${user_name}"
+      password_hash: "${password_hash}"
+      ssh_authorized_keys:
+        - "${ssh_pubkey}"
+      groups:
+        - docker
+        - sudo
+        - systemd-journal
+systemd:
+  units:
+    # Disable analitics
+    - name: rpm-ostree-countme.timer
+      enabled: false
+      mask: true
+    # Enable Wi-Fi in NetworkManager for an Intel wireless card
+    # And install k3s
+    # Setup en_US locale
+    - name: rpm-ostree-install-post-install.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Post install setup
+        Wants=network-online.target
+        After=network-online.target
+        Before=zincati.service
+        ConditionPathExists=!/var/lib/%N.stamp
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/rpm-ostree install -y --allow-inactive NetworkManager-wifi iwlwifi-dvm-firmware iwlwifi-mvm-firmware langpacks-en
+        ExecStart=/usr/bin/localectl set-locale LANG=en_US.UTF-8
+        ExecStart=/bin/bash -c "curl -sSL https://get.k3s.io | sh -"
+        ExecStart=/bin/touch /var/lib/%N.stamp
+        ExecStart=/bin/systemctl --no-block reboot
+        [Install]
+        WantedBy=multi-user.target
+storage:
+  links:
+    - path: /etc/localtime
+      target: "../usr/share/zoneinfo/${timezone}"
+  files:
+    # Skip k3s traefik install
+    - path : /var/lib/rancher/k3s/server/manifests/traefik.yaml.skip
+      mode: 0644
+      contents:
+        inline: ""
+    - path: /etc/vconsole.conf
+      mode: 0644
+      contents:
+        inline: "KEYMAP=${keymap}"
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: "${hostname}"
+    - path: "/etc/NetworkManager/system-connections/${wifiname}.nmconnection"
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=${wifi_name}
+          uuid=${wifi_uuid}
+          type=wifi
+          interface-name=${wifi_iface}
+
+          [wifi]
+          mode=infrastructure
+          ssid=${wifi_name}
+
+          [wifi-security]
+          auth-alg=open
+          key-mgmt=wpa-psk
+          psk=${wifi_pw}
+
+          [ipv4]
+          method=auto
+
+          [ipv6]
+          addr-gen-mode=default
+          method=auto
+
+          [proxy]
