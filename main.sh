@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
-type podman > /dev/null
+type \
+    envsubst \
+    podman \
+        > /dev/null
 
-test -f fedora-coreos-*-live-iso.x86_64.iso || podman run -it --rm -v $PWD:/app:z -w /app quay.io/coreos/coreos-installer:release download --format=iso
+# Download iso file
+test -f fedora-coreos-*-live-iso.x86_64.iso || \
+podman run -it --rm -v $PWD:/app:z -w /app \
+    quay.io/coreos/coreos-installer:release \
+    download --format=iso
+
+# Populate butane template file
+set -a; source .env; set +a
+envsubst < main.bu.template > main.bu
