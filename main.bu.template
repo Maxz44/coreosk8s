@@ -33,9 +33,7 @@ systemd:
         RemainAfterExit=yes
         ExecStart=/usr/bin/rpm-ostree install -y --allow-inactive NetworkManager-wifi iwlwifi-dvm-firmware iwlwifi-mvm-firmware langpacks-en
         ExecStart=/usr/bin/localectl set-locale LANG=en_US.UTF-8
-        ExecStart=/bin/bash -c "curl -sSL https://get.k3s.io | sh -"
         ExecStart=/bin/touch /var/lib/%N.stamp
-        ExecStart=/bin/systemctl --no-block reboot
         [Install]
         WantedBy=multi-user.target
 storage:
@@ -56,7 +54,7 @@ storage:
       mode: 0644
       contents:
         inline: "${hostname}"
-    - path: "/etc/NetworkManager/system-connections/${wifiname}.nmconnection"
+    - path: "/etc/NetworkManager/system-connections/${wifi_name}.nmconnection"
       mode: 0600
       contents:
         inline: |

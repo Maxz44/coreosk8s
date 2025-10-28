@@ -1,4 +1,5 @@
 fedora-coreos-*-live-iso.x86_64.iso
 fedora-coreos-*-live-iso.x86_64.iso.sig
 main.bu
+main.ign
 .env
